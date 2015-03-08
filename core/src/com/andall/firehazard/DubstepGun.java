@@ -52,6 +52,5 @@ public class DubstepGun {
         }
         effect.draw(sb, Gdx.graphics.getRawDeltaTime()); // Draw the particle
         effect.update(Gdx.graphics.getRawDeltaTime()); // Update the particle
-        System.out.println("b");
     }
 }
