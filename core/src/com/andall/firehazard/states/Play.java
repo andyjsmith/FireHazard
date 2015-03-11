@@ -141,6 +141,14 @@ public class Play extends GameState {
             b2dCam.translate(0.1f, 0);
         }
 
+        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
+            b2dCam.rotate(-0.5f, 0, 0, 1);
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.X)) {
+            b2dCam.rotate(0.5f, 0, 0, 1);
+        }
+
     }
 
     public void update(float dt) {
