@@ -190,6 +190,13 @@ public class Play extends GameState {
     }
 
     public void dispose() {
+
+        sb.dispose();
+        font.dispose();
+        world.dispose();
+        shape.dispose();
+        b2dr.dispose();
+
     }
 
 }
