@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 
@@ -31,6 +32,8 @@ public class Play extends GameState {
     private ContactListener listener;
     private Sprite playerSprite;
     private Array<Body> tmpBodies = new Array<Body>();
+    private Vector3 screenCoordinates;
+    private Vector3 worldCoordinates;
 
     public Play(GameStateManager gsm) {
         super(gsm);
@@ -69,6 +72,9 @@ public class Play extends GameState {
 
         hudCamera = new OrthographicCamera(Game.V_WIDTH, Game.V_HEIGHT);
         hudCamera.position.set(Game.V_WIDTH / 2, Game.V_HEIGHT / 2, 0);
+
+        screenCoordinates = new Vector3();
+        worldCoordinates = new Vector3();
 
         listener = new ContactListener() {
 
@@ -167,6 +173,11 @@ public class Play extends GameState {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         b2dr.render(world, b2dCam.combined);
         sb.setProjectionMatrix(b2dCam.combined);
+
+        screenCoordinates.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+        worldCoordinates.set(screenCoordinates);
+        cam.unproject(worldCoordinates);
+
         sb.begin();
         world.getBodies(tmpBodies);
         for (Body body : tmpBodies) {
@@ -184,7 +195,7 @@ public class Play extends GameState {
         sb.setProjectionMatrix(hudCam.combined);
         sb.getProjectionMatrix().set(hudCamera.combined);
         sb.begin();
-        dubstepGun.update(sb);
+        dubstepGun.update(sb, (int) worldCoordinates.x, (int) worldCoordinates.y);
         font.draw(sb, "FPS: " + Gdx.graphics.getFramesPerSecond(), 20, 20);
         sb.end();
     }

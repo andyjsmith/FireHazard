@@ -20,7 +20,7 @@ public class DubstepGun {
         effect.load(Gdx.files.internal("effects/explode.particle"), Gdx.files.internal("effects"));
     }
 
-    public void update(SpriteBatch sb) {
+    public void update(SpriteBatch sb, int x, int y) {
         if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             if (!dub1.isPlaying() && !dub2.isPlaying() && dub) {
                 dub2.play();
@@ -42,7 +42,7 @@ public class DubstepGun {
                     */
                 }
             }
-            effect.setPosition(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY());
+            effect.setPosition(x, y);
             effect.setDuration(0);
             effect.start();
         } else {
