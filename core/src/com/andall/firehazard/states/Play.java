@@ -1,5 +1,6 @@
 package com.andall.firehazard.states;
 
+import com.andall.firehazard.Debug;
 import com.andall.firehazard.DubstepGun;
 import com.andall.firehazard.Game;
 import com.andall.firehazard.handlers.GameStateManager;
@@ -10,7 +11,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -20,8 +20,8 @@ import com.badlogic.gdx.utils.Array;
 import static com.andall.firehazard.handlers.B2DVars.PPM;
 
 public class Play extends GameState {
-    DubstepGun dubstepGun = new DubstepGun();
-    int mb = 1024 * 1024;
+    private DubstepGun dubstepGun = new DubstepGun();
+    private Debug debug = new Debug();
     private World world;
     private Box2DDebugRenderer b2dr;
     private OrthographicCamera b2dCam, hudCamera;
@@ -36,7 +36,6 @@ public class Play extends GameState {
     private Array<Body> tmpBodies = new Array<Body>();
     private Vector3 screenCoordinates;
     private Vector3 worldCoordinates;
-    private ShapeRenderer sr;
 
     public Play(GameStateManager gsm) {
         super(gsm);
@@ -79,8 +78,6 @@ public class Play extends GameState {
         screenCoordinates = new Vector3();
         worldCoordinates = new Vector3();
 
-        sr = new ShapeRenderer();
-        sr.setAutoShapeType(true);
 
         listener = new ContactListener() {
 
@@ -161,12 +158,18 @@ public class Play extends GameState {
             b2dCam.rotate(0.5f, 0, 0, 1);
         }
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+            if (Gdx.graphics.isFullscreen()) {
+                Gdx.graphics.setDisplayMode(Game.V_WIDTH, Game.V_HEIGHT, false);
+            } else {
+                Gdx.graphics.setDisplayMode(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+            }
+        }
     }
 
     public void update(float dt) {
 
         handleInput();
-
 
         b2dCam.update();
         hudCamera.update();
@@ -195,28 +198,15 @@ public class Play extends GameState {
                 sprite.draw(sb);
             }
         }
-        sb.end();
 
         // Draw hud
-        sb.setProjectionMatrix(hudCam.combined);
-        sb.getProjectionMatrix().set(hudCamera.combined);
-        sb.begin();
+        sb.setProjectionMatrix(hudCamera.combined);
+
+        // Update dubstep gun visuals
         dubstepGun.update(sb, (int) worldCoordinates.x, (int) worldCoordinates.y);
-        font.draw(sb, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, 20);
-        font.draw(sb, "Platform: " + Functions.getPlatform(), 10, 40);
-        font.draw(sb, "Used Memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb) + "MB (" + (int) (((float) Runtime.getRuntime().totalMemory() - (float) Runtime.getRuntime().freeMemory()) / (float) Runtime.getRuntime().totalMemory() * 100) + "%)", 10, 60);
-        font.draw(sb, "Total Memory: " + (Runtime.getRuntime().totalMemory() / mb) + "MB", 10, 80);
-        font.draw(sb, "Max Memory: " + (Runtime.getRuntime().maxMemory() / mb) + "MB", 10, 100);
-        font.draw(sb, "Available Processors: " + Runtime.getRuntime().availableProcessors(), 10, 120);
-        sr.begin();
-        sr.setProjectionMatrix(hudCamera.combined);
-        sr.setColor(1, 1, 0, 1);
-        sr.line(worldCoordinates.x, 0, worldCoordinates.x, Game.V_HEIGHT); // Vertical line
-        font.draw(sb, "x: " + Integer.toString((int) worldCoordinates.x), worldCoordinates.x + 10, 20); // X text
-        sr.line(0, worldCoordinates.y, Game.V_WIDTH, worldCoordinates.y); // Horizontal line
-        font.draw(sb, "y: " + Integer.toString((int) worldCoordinates.y), 10, worldCoordinates.y + 20); // Y text
-        sb.end();
-        sr.end();
+
+        // Draw debug info, must be last
+        debug.drawDebug(sb, worldCoordinates, hudCamera, font);
     }
 
     public void dispose() {
@@ -226,7 +216,7 @@ public class Play extends GameState {
         world.dispose();
         shape.dispose();
         b2dr.dispose();
-        sr.dispose();
+        debug.dispose();
 
     }
 
