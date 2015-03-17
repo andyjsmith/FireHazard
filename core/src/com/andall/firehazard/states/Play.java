@@ -11,6 +11,10 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -37,10 +41,16 @@ public class Play extends GameState {
     private Vector3 screenCoordinates;
     private Vector3 worldCoordinates;
 
+    private TiledMap tileMap;
+    private int tileSize;
+    private OrthogonalTiledMapRenderer tmr;
+
     public Play(GameStateManager gsm) {
         super(gsm);
         world = new World(new Vector2(0, -9.8f), true);
         b2dr = new Box2DDebugRenderer();
+
+        createTiles();
 
         // Create Platform
         bdef = new BodyDef();
@@ -71,6 +81,7 @@ public class Play extends GameState {
 
         b2dCam = new OrthographicCamera();
         b2dCam.setToOrtho(false, Game.V_WIDTH / PPM, Game.V_HEIGHT / PPM);
+        cam.setToOrtho(false, Game.V_WIDTH, Game.V_HEIGHT);
 
         hudCamera = new OrthographicCamera(Game.V_WIDTH, Game.V_HEIGHT);
         hudCamera.position.set(Game.V_WIDTH / 2, Game.V_HEIGHT / 2, 0);
@@ -128,34 +139,43 @@ public class Play extends GameState {
 
         if (Gdx.input.isKeyPressed(Input.Keys.H)) {
             b2dCam.zoom -= 0.05;
+            tileCam.zoom -= 0.05;
+
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.G)) {
             b2dCam.zoom += 0.05;
+            tileCam.zoom += 0.05;
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             b2dCam.translate(0, 0.1f);
+            tileCam.translate(0, 0.1f * PPM);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             b2dCam.translate(0, -0.1f);
+            tileCam.translate(0, -0.1f * PPM);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             b2dCam.translate(-0.1f, 0);
+            tileCam.translate(-0.1f * PPM, 0);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             b2dCam.translate(0.1f, 0);
+            tileCam.translate(0.1f * PPM, 0);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
             b2dCam.rotate(-0.5f, 0, 0, 1);
+            tileCam.rotate(-0.5f, 0, 0, 1);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.X)) {
             b2dCam.rotate(0.5f, 0, 0, 1);
+            tileCam.rotate(0.5f, 0, 0, 1);
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
@@ -173,12 +193,14 @@ public class Play extends GameState {
 
         b2dCam.update();
         hudCamera.update();
+        cam.update();
+        tileCam.update();
         world.step(dt, 6, 2);
 
     }
 
     public void render() {
-        Gdx.gl.glClearColor(0, 0, 0, 0);
+        Gdx.gl.glClearColor(1, 1, 1, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         b2dr.render(world, b2dCam.combined);
         sb.setProjectionMatrix(b2dCam.combined);
@@ -186,6 +208,8 @@ public class Play extends GameState {
         screenCoordinates.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         worldCoordinates.set(screenCoordinates);
         cam.unproject(worldCoordinates);
+
+
 
         sb.begin();
         world.getBodies(tmpBodies);
@@ -207,7 +231,65 @@ public class Play extends GameState {
 
         // Draw debug info, must be last
         debug.drawDebug(sb, worldCoordinates, hudCamera, font);
+
+        sb.setProjectionMatrix(tileCam.combined);
+        tmr.setView(tileCam);
+        tmr.render();
     }
+
+
+    private void createTiles() {
+
+        // load tile map
+        tileMap = new TmxMapLoader().load("test.tmx");
+        tmr = new OrthogonalTiledMapRenderer(tileMap);
+        tileSize = 32;
+
+        TiledMapTileLayer layer;
+
+        layer = (TiledMapTileLayer) tileMap.getLayers().get("blocks");
+        createLayer(layer);
+
+
+
+    }
+
+    private void createLayer(TiledMapTileLayer layer) {
+
+        BodyDef bdef = new BodyDef();
+        FixtureDef fdef = new FixtureDef();
+        fdef.friction = 2f;
+        // go through all the cells in the layer
+        for (int row = 0; row < layer.getHeight(); row++) {
+            for (int col = 0; col < layer.getWidth(); col++) {
+
+                // get cell
+                TiledMapTileLayer.Cell cell = layer.getCell(col, row);
+
+                // check if cell exists
+                if (cell == null) continue;
+                if (cell.getTile() == null) continue;
+
+                // create a body + fixture from cell
+                bdef.type = BodyDef.BodyType.StaticBody;
+                bdef.position.set((col + 0.5f) * tileSize / PPM, (row + 0.5f) * tileSize / PPM);
+
+                ChainShape cs = new ChainShape();
+                Vector2[] v = new Vector2[3];
+                v[0] = new Vector2(-tileSize / 2 / PPM, -tileSize / 2 / PPM);
+                v[1] = new Vector2(-tileSize / 2 / PPM, tileSize / 2 / PPM);
+                v[2] = new Vector2(tileSize / 2 / PPM, tileSize / 2 / PPM);
+                cs.createChain(v);
+                fdef.friction = 0;
+                fdef.shape = cs;
+
+                fdef.isSensor = false;
+                world.createBody(bdef).createFixture(fdef);
+
+            }
+        }
+    }
+
 
     public void dispose() {
 

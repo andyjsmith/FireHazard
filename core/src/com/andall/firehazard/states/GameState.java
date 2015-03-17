@@ -12,6 +12,7 @@ public abstract class GameState {
     protected SpriteBatch sb;
     protected OrthographicCamera cam;
     protected OrthographicCamera hudCam;
+    protected OrthographicCamera tileCam;
 
     protected GameState(GameStateManager gsm) {
         this.gsm = gsm;
@@ -19,6 +20,7 @@ public abstract class GameState {
         sb = game.getSpriteBatch();
         cam = game.getCamera();
         hudCam = game.getHUDCamera();
+        tileCam = game.getTileCam();
     }
 
     @SuppressWarnings("unused") // handleInput is unused at this point, remove when it is.

@@ -19,6 +19,7 @@ public class Game implements ApplicationListener {
 	private SpriteBatch sb;
 	private OrthographicCamera cam;
 	private OrthographicCamera hudCam;
+	private OrthographicCamera tileCam;
 
 	private GameStateManager gsm;
 
@@ -29,6 +30,8 @@ public class Game implements ApplicationListener {
 		cam.setToOrtho(false, V_WIDTH, V_HEIGHT);
 		hudCam = new OrthographicCamera();
 		hudCam.setToOrtho(false, V_WIDTH, V_HEIGHT);
+		tileCam = new OrthographicCamera();
+		tileCam.setToOrtho(false, V_WIDTH, V_HEIGHT);
 		gsm = new GameStateManager(this);
 	}
 
@@ -77,4 +80,6 @@ public class Game implements ApplicationListener {
 	public OrthographicCamera getHUDCamera() {
 		return hudCam;
 	}
+
+	public OrthographicCamera getTileCam() { return tileCam; }
 }
